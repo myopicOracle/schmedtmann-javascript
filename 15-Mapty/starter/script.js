@@ -16,14 +16,18 @@ const inputElevation = document.querySelector('.form__input--elevation');
 
 navigator.geolocation.getCurrentPosition(
     function(position){
-      console.log("Location found")  
+        const longitude = position.coords;
+        const latitude = position.coords;
+        console.log(`https://www.google.com/maps/@${longitude},@${latitude}`)
     },
-    function(position){
+    function(){
         console.log("Unable to find location")
     })
 
+    
+
 // Leaflet sample code to 1. create map; 2. add tiles; 3. add marker
-var map = L.map('map').setView([51.505, -0.09], 13);
+const map = L.map('map').setView([51.505, -0.09], 13);
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -32,3 +36,4 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 L.marker([51.5, -0.09]).addTo(map)
     .bindPopup('A pretty CSS popup.<br> Easily customizable.')
     .openPopup();
+
