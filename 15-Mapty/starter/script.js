@@ -14,26 +14,28 @@ const inputElevation = document.querySelector('.form__input--elevation');
 // basic geolocation API - takes 2 callbacks
 // navigator.geolocation.getCurrentPosition(function(){},function(){})
 
-navigator.geolocation.getCurrentPosition(
-    function(position){
-        const longitude = position.coords;
-        const latitude = position.coords;
-        console.log(`https://www.google.com/maps/@${longitude},@${latitude}`)
-    },
-    function(){
-        console.log("Unable to find location")
-    })
+if (navigator.geolocation)
+    navigator.geolocation.getCurrentPosition(
+        function(position){
+            const {latitude} = position.coords;
+            const {longitude} = position.coords;
+            console.log(latitude)
+            console.log(longitude)
+            console.log(`https://www.google.com/maps/@${latitude},@${longitude}`)
+        },
+        function(){
+            console.log("Unable to find location")
+        }
+    )
 
-    
 
 // Leaflet sample code to 1. create map; 2. add tiles; 3. add marker
-const map = L.map('map').setView([51.505, -0.09], 13);
+// const map = L.map('map').setView([latitude, longitude], 13);
 
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
+// L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+//     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+// }).addTo(map);
 
-L.marker([51.5, -0.09]).addTo(map)
-    .bindPopup('A pretty CSS popup.<br> Easily customizable.')
-    .openPopup();
-
+// L.marker([51.5, -0.09]).addTo(map)
+//     .bindPopup('A pretty CSS popup.<br> Easily customizable.')
+//     .openPopup();
