@@ -310,5 +310,4 @@ class App {
 // create App object
 const mapty = new App() // so code executes soon as page loads
 
-
 // ### END OF PROGRAM
