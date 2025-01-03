@@ -90,7 +90,11 @@ class App {
     #workoutArray = [];
 
     constructor() { // constructor immediately gets called on page load (b/c of new Object defined in global scope)
+        // Get user's position
         this._getPosition();
+        // Get data from local storage
+        this._getLocalStorage();
+        // Attach event handlers
         form.addEventListener('submit', this._newWorkout.bind(this)); // need to 'bind' b/c in event listener functions, the 'this' keyword points to the DOM object; so here, it points to 'form' and no longer the 'App' object we are in 
         inputType.addEventListener('change', this._toggleElevationField.bind(this)); // since constructor is immediately called on page load, these event listeners are immediately available in the global scope
         containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
@@ -121,6 +125,10 @@ class App {
         
         // to get lat/long of click event, so marker can be generated at clicked location
         this.#map.on('click', this._showForm.bind(this)); // need to bind 'this' to the App object
+
+        this.#workoutArray.forEach(work => { // have to call this here instead of beg, b/c map not loaded yet in beg
+            this._renderWorkoutMarker(work)
+        })
     } 
 
     _showForm(mapE) {
@@ -173,14 +181,35 @@ class App {
             )
             return alert('Inputs have ot be positive enumbers!')
 
-            // Validate data -- my way
-            // if ( !( workoutDistance && workoutDuration && workoutCadence > 0 ) ) {
-            //     alert("Inputs have to be positive numbers!")
-            // } 
-
             workout = new Running([lat, lng], workoutDistance, workoutDuration, workoutCadence);
-            this.#workoutArray.push(workout);
         }
+
+        if (workoutType === "cycling") {
+            if (
+                !validInputs(workoutDistance, workoutDuration, workoutElevation) // aka " If all of these are numbers, then return true "
+                || !allPositive(workoutDistance, workoutDuration) // excluded elevation, b/c could be negative
+            )
+            return alert('Inputs have ot be positive enumbers!')
+
+            workout = new Cycling([lat, lng], workoutDistance, workoutDuration, workoutElevation);
+
+        }
+        
+        // add new object to workout array
+        this.#workoutArray.push(workout)
+
+        // render workout on map as marker
+        this.renderWorkoutMarker(workout)
+
+        // render workout in sidepanel list
+        this._renderWorkout(workout)
+
+        // hide form + clear input fields
+        this._hideForm()
+
+        // set local storage for all workouts
+        this._setLocalStorage()
+
     };
             
             // else {
@@ -400,12 +429,12 @@ class App {
 
         _moveToPopup(e) {
             const workoutEl = e.target.closest('.workout'); // selects closest parent, here would be 'li' which has class '.workout'
-            console.log(workoutEl);
+            // console.log(workoutEl);
 
             if (!workoutEl) return;
 
             const workout = this.#workoutArray.find(work => work.id === workoutEl.dataset.id);
-            console.log(workout)
+            // console.log(workout)
 
             this.#map.setView(workout.coords, this.#mapZoomLevel, { // seView is Leaflet method; (coordinates, zoom level)
                 animate: true,
@@ -415,14 +444,37 @@ class App {
             })
 
             // using public interface
-            workout.click();
+            // workout.click(); // need to disable b/c objects stored in local, get returned as regular objects
         }
 
+        // to make persist across reloads
+        _setLocalStorage() {
+            localStorage.setItem('workouts', JSON.stringify(this.#workoutArray)) // basically storing "key: value" pairs; stored as string in key
+        }
+
+        _getLocalStorage() {
+            const data = JSON.parse(localStorage.getItem('workoutArray')) // parse turns string back to object
+            // console.log(data)
+
+            if (!data) return // guard clause
+
+            this.#workoutArray = data
+
+            this.#workoutArray.forEach(work => {
+                this._renderWorkout(work)
+            })
+        }
+
+        reset() { // the only public interface
+            localStorage.removeItem('workoutArray')
+            location.reload() // location is a prebuilt function with many methods
+        }
     };
 
 
 // create App object
 const mapty = new App() // so code executes soon as page loads
 
+// console.log(app.reset())
 
 // ### END OF PROGRAM
