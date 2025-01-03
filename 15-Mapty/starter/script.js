@@ -16,12 +16,13 @@ const inputElevation = document.querySelector('.form__input--elevation');
 class Workout {
     date = new Date();
     id = (Date.now() + '').slice(-10); // date/time now, converted to string, then select last 10 chars; any newly creasted object should have identifier so we can select later; in real world, typically you create id's using a library
+    clicks = 0;
     // below are new fields added by me after initial refactor for architecture
-    month = this.date.getMonth();
-    day = this.date.getDate();
-    hour = this.date.getHours();
-    minute = this.date.getMinutes();
-    amOrPm = this.hour >= 12 ? "PM" : "AM";
+        // month = this.date.getMonth();
+        // day = this.date.getDate();
+        // hour = this.date.getHours();
+        // minute = this.date.getMinutes();
+        // amOrPm = this.hour >= 12 ? "PM" : "AM";
 
     constructor(coords, distance, duration) {
         this.coords = coords; // [lat, lng]
@@ -34,6 +35,10 @@ class Workout {
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
         this.description = `${this.type[0].toUppercase()}${this.type.slice(1)} on ${months[this.date.getMonth()]} ${[this.date.getDate()]}`
+    }
+
+    click() {
+        this.click++;
     }
 }
 
@@ -80,6 +85,7 @@ class Cycling extends Workout {
 // APPLICATION ARCHITECTURE
 class App {
     #map;
+    #mapZoomLevel = 13;
     #mapEvent;
     #workoutArray = [];
 
@@ -87,6 +93,7 @@ class App {
         this._getPosition();
         form.addEventListener('submit', this._newWorkout.bind(this)); // need to 'bind' b/c in event listener functions, the 'this' keyword points to the DOM object; so here, it points to 'form' and no longer the 'App' object we are in 
         inputType.addEventListener('change', this._toggleElevationField.bind(this)); // since constructor is immediately called on page load, these event listeners are immediately available in the global scope
+        containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
     }
 
     _getPosition() { // no need for 'return this...' since called in constructor
@@ -106,7 +113,7 @@ class App {
 
         this.coords = [ latitude, longitude ]
 
-        this.#map = L.map('map').setView(this.coords, 13); // 'map' is id of map element in html
+        this.#map = L.map('map').setView(this.coords, this.#mapZoomLevel); // 'map' is id of map element in html
 
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -173,152 +180,158 @@ class App {
 
             workout = new Running([lat, lng], workoutDistance, workoutDuration, workoutCadence);
             this.#workoutArray.push(workout);
+        }
+    };
             
             // else {
 
-            //     const runObject = new Running([lat, lng], workoutDistance, workoutDuration, workoutCadence);
+    //         //     const runObject = new Running([lat, lng], workoutDistance, workoutDuration, workoutCadence);
                 
-            //     // Add new object to workout array
-            //     this.workoutArray.push(runObject);
-            //         console.log(this.workoutArray)
+    //         //     // Add new object to workout array
+    //         //     this.workoutArray.push(runObject);
+    //         //         console.log(this.workoutArray)
 
-                // Render workout on map as marker
-                L.marker([ lat, lng ]) // replaced hard-codes with "coords" array
-                    .addTo(this.#map)
-                    .bindPopup(L.popup({ // binds popup to marker; can use object instead of string
-                        maxWidth: 250,
-                        minWidth: 100,
-                        autoClose: false,
-                        closeOnClick: false,
-                        className: `${type}-popup`,
-                    })
-                )
-                    .setPopupContent("Running")
-                    .openPopup();
+    //             // Render workout on map as marker
+    //             L.marker([ lat, lng ]) // replaced hard-codes with "coords" array
+    //                 .addTo(this.#map)
+    //                 .bindPopup(L.popup({ // binds popup to marker; can use object instead of string
+    //                     maxWidth: 250,
+    //                     minWidth: 100,
+    //                     autoClose: false,
+    //                     closeOnClick: false,
+    //                     className: `${type}-popup`,
+    //                 })
+    //             )
+    //                 .setPopupContent("Running")
+    //                 .openPopup();
 
-                // Render workout on list
-                const newWorkoutNode = document.createElement("li") 
-                newWorkoutNode.innerHTML = `<li class="workout workout--running" data-id="${runObject.id}">
-                                                    <h2 class="workout__title">Running on 
-                                                    ${months[runObject.month]}
-                                                    ${" "}
-                                                    ${runObject.day}
-                                                    ${" "}
-                                                    at 
-                                                    ${" "}
-                                                    ${runObject.hour}
-                                                    :
-                                                    ${runObject.minute}
-                                                    ${" "}
-                                                    ${runObject.amOrPm}
-                                                    </h2>
-                                                    <div class="workout__details">
-                                                        <span class="workout__icon">🏃‍♂️</span>
-                                                        <span class="workout__value">${workoutDistance}</span>
-                                                        <span class="workout__unit">km</span>
-                                                    </div>
-                                                    <div class="workout__details">
-                                                        <span class="workout__icon">⏱</span>
-                                                        <span class="workout__value">${workoutDuration}</span>
-                                                        <span class="workout__unit">min</span>
-                                                    </div>
-                                                    <div class="workout__details">
-                                                        <span class="workout__icon">⚡️</span>
-                                                        <span class="workout__value">${(workoutDuration/workoutDistance).toFixed(1)}</span>
-                                                        <span class="workout__unit">min/km</span>
-                                                    </div>
-                                                    <div class="workout__details">
-                                                        <span class="workout__icon">🦶🏼</span>
-                                                        <span class="workout__value">${workoutCadence}</span>
-                                                        <span class="workout__unit">spm</span>
-                                                    </div>
-                                                </li>`
-                containerWorkouts.appendChild(newWorkoutNode)
+    //             // Render workout on list
+    //             const newWorkoutNode = document.createElement("li") 
+    //             newWorkoutNode.innerHTML = `<li class="workout workout--running" data-id="${runObject.id}">
+    //                                                 <h2 class="workout__title">Running on 
+    //                                                 ${months[runObject.month]}
+    //                                                 ${" "}
+    //                                                 ${runObject.day}
+    //                                                 ${" "}
+    //                                                 at 
+    //                                                 ${" "}
+    //                                                 ${runObject.hour}
+    //                                                 :
+    //                                                 ${runObject.minute}
+    //                                                 ${" "}
+    //                                                 ${runObject.amOrPm}
+    //                                                 </h2>
+    //                                                 <div class="workout__details">
+    //                                                     <span class="workout__icon">🏃‍♂️</span>
+    //                                                     <span class="workout__value">${workoutDistance}</span>
+    //                                                     <span class="workout__unit">km</span>
+    //                                                 </div>
+    //                                                 <div class="workout__details">
+    //                                                     <span class="workout__icon">⏱</span>
+    //                                                     <span class="workout__value">${workoutDuration}</span>
+    //                                                     <span class="workout__unit">min</span>
+    //                                                 </div>
+    //                                                 <div class="workout__details">
+    //                                                     <span class="workout__icon">⚡️</span>
+    //                                                     <span class="workout__value">${(workoutDuration/workoutDistance).toFixed(1)}</span>
+    //                                                     <span class="workout__unit">min/km</span>
+    //                                                 </div>
+    //                                                 <div class="workout__details">
+    //                                                     <span class="workout__icon">🦶🏼</span>
+    //                                                     <span class="workout__value">${workoutCadence}</span>
+    //                                                     <span class="workout__unit">spm</span>
+    //                                                 </div>
+    //                                             </li>`
+    //             containerWorkouts.appendChild(newWorkoutNode)
 
 
-                // Clear form input fields
+    //             // Clear form input fields
                 
-            }
+    //         }
 
-        // Else cycling, create cycling object
-        else {
+    //     // Else cycling, create cycling object
+    //     else {
 
 
-            // Validate data -- solution
-            if (
-                !validInputs(workoutDistance, workoutDuration, workoutElevation) // aka " If all of these are numbers, then return true "
-                || !allPositive(workoutDistance, workoutDuration) // excluded elevation, b/c could be negative
-            )
-            return alert('Inputs have ot be positive enumbers!')
+    //         // Validate data -- solution
+    //         if (
+    //             !validInputs(workoutDistance, workoutDuration, workoutElevation) // aka " If all of these are numbers, then return true "
+    //             || !allPositive(workoutDistance, workoutDuration) // excluded elevation, b/c could be negative
+    //         )
+    //         return alert('Inputs have ot be positive enumbers!')
 
-            // Validate data -- my way
-            // if ( !(workoutDistance && workoutDuration && workoutElevation > 0 ) ) {
-            //     alert("Inputs have to be positive numbers!")
-            // } 
-            workout = new Cycling([lat, lng], workoutDistance, workoutDuration, workoutElevation);
-            this.#workoutArray.push(workout);
+    //         // Validate data -- my way
+    //         // if ( !(workoutDistance && workoutDuration && workoutElevation > 0 ) ) {
+    //         //     alert("Inputs have to be positive numbers!")
+    //         // } 
+    //         workout = new Cycling([lat, lng], workoutDistance, workoutDuration, workoutElevation);
+    //         this.#workoutArray.push(workout);
 
-            this.renderWorkoutMarker(workout)
+    //         this.renderWorkoutMarker(workout)
 
-            //
-            // else {
+    //         //
+    //         // else {
                 
-            //     const cycleObject = new Cycling([lat, lng], workoutDistance, workoutDuration, workoutElevation);
+    //         //     const cycleObject = new Cycling([lat, lng], workoutDistance, workoutDuration, workoutElevation);
                 
-            //     // Add new object to workout array
-            //     this.workoutArray.push(cycleObject);
-            //         console.log(this.workoutArray)
+    //         //     // Add new object to workout array
+    //         //     this.workoutArray.push(cycleObject);
+    //         //         console.log(this.workoutArray)
 
-                // Render workout on map as marker
-                const { lat, lng } = this.#mapEvent.latlng
+    //             // Render workout on map as marker
+    //             const { lat, lng } = this.#mapEvent.latlng
   
-                // Render workout on list
-                const newWorkoutNode = document.createElement("li")
-                newWorkoutNode.innerHTML = `<li class="workout workout--running" data-id="${cycleObject.id}">
-                                                    <h2 class="workout__title">Cycling on 
-                                                    ${months[cycleObject.month]}
-                                                    ${" "}
-                                                    ${cycleObject.day}
-                                                    ${" "}
-                                                    at
-                                                    ${" "}
-                                                    ${cycleObject.hour}
-                                                    :
-                                                    ${cycleObject.minute}
-                                                    ${" "}
-                                                    ${cycleObject.amOrPm}
-                                                    </h2>
-                                                    <div class="workout__details">
-                                                        <span class="workout__icon">🚴‍♀️</span>
-                                                        <span class="workout__value">${workoutDistance}</span>
-                                                        <span class="workout__unit">km</span>
-                                                    </div>
-                                                    <div class="workout__details">
-                                                        <span class="workout__icon">⏱</span>
-                                                        <span class="workout__value">${workoutDuration}</span>
-                                                        <span class="workout__unit">min</span>
-                                                    </div>
-                                                    <div class="workout__details">
-                                                        <span class="workout__icon">⚡️</span>
-                                                        <span class="workout__value">${(workoutDistance/workoutDuration).toFixed(1)}</span>
-                                                        <span class="workout__unit">km/h</span>
-                                                    </div>
-                                                    <div class="workout__details">
-                                                        <span class="workout__icon">⛰</span>
-                                                        <span class="workout__value">${workoutElevation}</span>
-                                                        <span class="workout__unit">m</span>
-                                                    </div>
-                                                </li>`
-                containerWorkouts.appendChild(newWorkoutNode)
+    //             // Render workout on list
+    //             const newWorkoutNode = document.createElement("li")
+    //             newWorkoutNode.innerHTML = `
+    //                 <li class="workout workout--running" data-id="${cycleObject.id}">
+    //                     <h2 class="workout__title">Cycling on 
+    //                     ${months[cycleObject.month]}
+    //                     ${" "}
+    //                     ${cycleObject.day}
+    //                     ${" "}
+    //                     at
+    //                     ${" "}
+    //                     ${cycleObject.hour}
+    //                     :
+    //                     ${cycleObject.minute}
+    //                     ${" "}
+    //                     ${cycleObject.amOrPm}
+    //                     </h2>
+    //                     <div class="workout__details">
+    //                         <span class="workout__icon">🚴‍♀️</span>
+    //                         <span class="workout__value">${workoutDistance}</span>
+    //                         <span class="workout__unit">km</span>
+    //                     </div>
+    //                     <div class="workout__details">
+    //                         <span class="workout__icon">⏱</span>
+    //                         <span class="workout__value">${workoutDuration}</span>
+    //                         <span class="workout__unit">min</span>
+    //                     </div>
+    //                     <div class="workout__details">
+    //                         <span class="workout__icon">⚡️</span>
+    //                         <span class="workout__value">${(workoutDistance/workoutDuration).toFixed(1)}</span>
+    //                         <span class="workout__unit">km/h</span>
+    //                     </div>
+    //                     <div class="workout__details">
+    //                         <span class="workout__icon">⛰</span>
+    //                         <span class="workout__value">${workoutElevation}</span>
+    //                         <span class="workout__unit">m</span>
+    //                     </div>
 
-                // Clear form input fields
-                inputDistance.value = inputDuration.value = inputElevation.value = "";
-            };
-            return this;
-        }
+    //                             </li>
+    //             `
+                                            
+    //         containerWorkouts.appendChild(newWorkoutNode)
 
-        _renderWorkoutMarker(workout) {
-            L.marker(workout.coords) // replaced hard-codes with "coords" array
+    //         // Clear form input fields
+    //         inputDistance.value = inputDuration.value = inputElevation.value = "";
+    //     };
+    //     return this;
+    // }
+
+    _renderWorkoutMarker(workout) {
+        L.marker(workout.coords) // replaced hard-codes with "coords" array
             .addTo(this.#map)
             .bindPopup(L.popup({ // binds popup to marker; can use object instead of string
                 maxWidth: 250,
@@ -349,55 +362,63 @@ class App {
                     <span class="workout__value">${workout.workoutDuration}</span>
                     <span class="workout__unit">min</span>
                 </div>
-                <div class="workout__details">
-                    <span class="workout__icon">⚡️</span>
-                    <span class="workout__value">${(workout.workoutDuration/workout.workoutDistance).toFixed(1)}</span>
-                    <span class="workout__unit">min/km</span>
-                </div>
-                <div class="workout__details">
-                    <span class="workout__icon">🦶🏼</span>
-                    <span class="workout__value">${workoutCadence}</span>
-                    <span class="workout__unit">spm</span>
-                </div>
             </li>`;
 
             if (workout.type === 'running')
-                html += `<li>
-                            <div class="workout__details">
-                                <span class="workout__icon">⚡️</span>
-                                <span class="workout__value">${(workout.pace).toFixed(1)}</span>
-                                <span class="workout__unit">min/km</span>
-                            </div>
-                            <div class="workout__details">
-                                <span class="workout__icon">🦶🏼</span>
-                                <span class="workout__value">${workout.workoutCadence}</span>
-                                <span class="workout__unit">spm</span>
-                            </div>
-                        </li>`
+                html += `
+                    <li>
+                        <div class="workout__details">
+                            <span class="workout__icon">⚡️</span>
+                            <span class="workout__value">${(workout.pace).toFixed(1)}</span>
+                            <span class="workout__unit">min/km</span>
+                        </div>
+                        <div class="workout__details">
+                            <span class="workout__icon">🦶🏼</span>
+                            <span class="workout__value">${workout.workoutCadence}</span>
+                            <span class="workout__unit">spm</span>
+                        </div>
+                    </li>`
 
             if (workout.type === 'running')
-                html += `<li>
-                            <div class="workout__details">
-                                <span class="workout__icon">⚡️</span>
-                                <span class="workout__value">${(workout.workoutSpeed).toFixed(1)}</span>
-                                <span class="workout__unit">km/h</span>
-                            </div>
-                            <div class="workout__details">
-                                <span class="workout__icon">⛰</span>
-                                <span class="workout__value">${workout.workoutElevation}</span>
-                                <span class="workout__unit">m</span>
-                            </div>
-                        </li>`
+                html += `
+                    <li>
+                        <div class="workout__details">
+                            <span class="workout__icon">⚡️</span>
+                            <span class="workout__value">${(workout.workoutSpeed).toFixed(1)}</span>
+                            <span class="workout__unit">km/h</span>
+                        </div>
+                        <div class="workout__details">
+                            <span class="workout__icon">⛰</span>
+                            <span class="workout__value">${workout.workoutElevation}</span>
+                            <span class="workout__unit">m</span>
+                        </div>
+                    </li>`
 
             form.insertAdjacentHTML('afterend, html'); // add as sibling element; because we don't want to be first or last child, which is what awould happen if we jhust append to UL
                 
-            }
+        }
 
+        _moveToPopup(e) {
+            const workoutEl = e.target.closest('.workout'); // selects closest parent, here would be 'li' which has class '.workout'
+            console.log(workoutEl);
+
+            if (!workoutEl) return;
+
+            const workout = this.#workoutArray.find(work => work.id === workoutEl.dataset.id);
+            console.log(workout)
+
+            this.#map.setView(workout.coords, this.#mapZoomLevel, { // seView is Leaflet method; (coordinates, zoom level)
+                animate: true,
+                pan: {
+                    duration: 1
+                }
+            })
+
+            // using public interface
+            workout.click();
+        }
 
     };
-
-
-
 
 
 // create App object
