@@ -9,19 +9,30 @@ const buttonCloseModal = document.querySelector(".close-modal")
 const overlay = document.querySelector(".overlay")
 
 // show modal window on click of any 3 top buttons
-buttonShowModal.forEach(item => item.addEventListener("click", (e) => {
+const showModal = (e) => {
     modal.classList.remove("hidden")
     overlay.classList.remove("hidden")
     e.target.style.backgroundColor = "gold"
-}))
+}
 
 // close modal window on click "X"
-buttonCloseModal.addEventListener("click", () => {
+const closeModal = () => {
     modal.classList.add("hidden")
     overlay.classList.add("hidden")
     buttonShowModal.forEach(item => item.style.backgroundColor = "white")
-})
+}
 
+// close modal window on 'Esc' keydown event 
+const escapeListener = (e) => {
+    if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+        closeModal()
+    }
+}
+
+// add event listeners for all events
+buttonShowModal.forEach(item => item.addEventListener("click", showModal))
+buttonCloseModal.addEventListener("click", closeModal)
+document.addEventListener("keydown", escapeListener)
 
 // trying out toggle -- not part of official solution
 const wrapper = document.querySelector("body")
